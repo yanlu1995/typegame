@@ -1,0 +1,64 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: scores
+    // Document ID: auto-generated
+    // Fields:
+    //   - uid: string (required) - The user's ID
+    //   - username: string (required) - The user's display name
+    //   - wpm: number (required) - Words per minute
+    //   - accuracy: number (required) - Typing accuracy percentage
+    //   - time: number (required) - Time taken in seconds
+    //   - createdAt: timestamp (required) - When the score was submitted
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidScore(data) {
+      return hasOnlyAllowedFields(['uid', 'username', 'wpm', 'accuracy', 'time', 'createdAt']) &&
+             data.uid is string &&
+             data.username is string && data.username.size() > 0 && data.username.size() <= 50 &&
+             data.wpm is number && data.wpm >= 0 && data.wpm <= 300 &&
+             data.accuracy is number && data.accuracy >= 0 && data.accuracy <= 100 &&
+             data.time is number && data.time > 0 &&
+             data.createdAt is timestamp;
+    }
+
+    match /scores/{scoreId} {
+      // Anyone can read the leaderboard
+      allow read: if true;
+      
+      // Only authenticated users can create their own scores
+      allow create: if isAuthenticated() && 
+                    isValidScore(request.resource.data) && 
+                    request.resource.data.uid == request.auth.uid;
+                    
+      // Scores are immutable
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}

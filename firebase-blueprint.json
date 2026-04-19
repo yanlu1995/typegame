@@ -1,0 +1,44 @@
+{
+  "entities": {
+    "Score": {
+      "title": "Score",
+      "description": "A user's typing test score",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The user's ID"
+        },
+        "username": {
+          "type": "string",
+          "description": "The user's display name"
+        },
+        "wpm": {
+          "type": "number",
+          "description": "Words per minute"
+        },
+        "accuracy": {
+          "type": "number",
+          "description": "Typing accuracy percentage"
+        },
+        "time": {
+          "type": "number",
+          "description": "Time taken in seconds"
+        },
+        "createdAt": {
+          "type": "timestamp",
+          "description": "When the score was submitted"
+        }
+      },
+      "required": ["uid", "username", "wpm", "accuracy", "time", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/scores/{scoreId}": {
+      "schema": {
+        "$ref": "#/entities/Score"
+      },
+      "description": "Collection of all typing test scores"
+    }
+  }
+}
